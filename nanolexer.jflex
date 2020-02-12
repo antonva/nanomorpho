@@ -1,6 +1,9 @@
 /**
   JFlex scanner for NanoMorpho based on a scanner for NanoLisp
-  Author: Anton Vilhelm Ásgeirsson, 2020
+  Authors: Anton Vilhelm Ásgeirsson <ava7@hi.is>, 2020
+           Bjartur Örn Jónsson <boj8@hi.is>, 2020
+           Eiður Ingimar Frostason <eif3@hi.is>, 2020
+
 	NanoLisp scanner Author: Snorri Agnarsson, 2017-2020
 
 	This stand-alone scanner/lexical analyzer can be built and run using:
@@ -26,13 +29,15 @@ import java.io.*;
 // the class, NanoLexer.java, that is generated.
 
 // Definitions of tokens:
-final static int ERROR = -1;
-final static int IF = 1001;
-final static int KEYWORD = 1002;
-final static int NAME = 1003;
-final static int LITERAL = 1004;
-final static int AND = 1005;
-final static int OR = 1006;
+final static int ERROR   = -1;
+final static int IF      = 1001;
+final static int NAME    = 1002;
+final static int LITERAL = 1003;
+final static int AND     = 1004;
+final static int OR      = 1005;
+final static int VAR     = 1006;
+final static int WHILE   = 1007;
+final static int RETURN  = 1008;
 final static int OPNAME1 = 2001;
 final static int OPNAME2 = 2002;
 final static int OPNAME3 = 2003;
@@ -41,11 +46,15 @@ final static int OPNAME5 = 2005;
 final static int OPNAME6 = 2006;
 final static int OPNAME7 = 2007;
 
-// A variable that will contain lexemes as they are recognized:
+// Variables that contain will contain lexemes and tokens as they are recognized.
 private static String l1, l2;
 private static int t1,t2;
+private static int line1,line2;
+private static int col1,col2;
 
 
+public int getLine() { return yyline+1; }
+public int getColumn() { return yycolumn+1; }
 public int advance() throws IOException {
     if (this.t2 == 0) {
         this.t1 = 0;
@@ -95,7 +104,6 @@ public static void main( String[] args ) throws Exception
 %}
 
 /* Reglulegar skilgreiningar */
-
 /* Regular definitions */
 
 _DIGIT=[0-9]
@@ -103,18 +111,11 @@ _FLOAT={_DIGIT}+\.{_DIGIT}+([eE][+-]?{_DIGIT}+)?
 _INT={_DIGIT}+
 _STRING=\"([^\"\\]|\\b|\\t|\\n|\\f|\\r|\\\"|\\\'|\\\\|(\\[0-3][0-7][0-7])|\\[0-7][0-7]|\\[0-7])*\"
 _CHAR=\'([^\'\\]|\\b|\\t|\\n|\\f|\\r|\\\"|\\\'|\\\\|(\\[0-3][0-7][0-7])|(\\[0-7][0-7])|(\\[0-7]))\'
-_DELIM=[({,;=})]
+_DELIM=[\(\{,;=\}\)]
 _AND=&&
 _OR=\|\|
 _NAME=([:letter:]|{_DIGIT})+
-_OPNAME1=[?\~\^]
-_OPNAME2=\:
-_OPNAME3=\|+
-_OPNAME4=&+
-_OPNAME5=([<>!]|==|<=|>=)
-_OPNAME6=[\+\-]
-_OPNAME7=[*/%]
-_BOOLOP=[!&|]
+_OPNAME=([?\~\^\:\+\-\|&<>!*/%=])+
 
 %%
 
@@ -141,35 +142,39 @@ _BOOLOP=[!&|]
     return IF;
 }
 
-"return" | "var" | "while" {
-    return KEYWORD;
+"return" {
+    return RETURN;
 }
 
-{_OPNAME1} {
-    return OPNAME1;
+"var" {
+    return VAR;
 }
 
-{_OPNAME2} {
-    return OPNAME2;
+"while" {
+    return WHILE;
 }
 
-{_OPNAME3} {
-    return OPNAME3;
+{_OPNAME} {
+    switch(yycharat(0)) {
+    case '?': {return OPNAME1;}
+    case '~': {return OPNAME1;}
+    case '^': {return OPNAME1;}
+    case ':': {return OPNAME2;}
+    case '|': {return OPNAME3;}
+    case '&': {return OPNAME4;}
+    case '<': {return OPNAME5;}
+    case '>': {return OPNAME5;}
+    case '!': {return OPNAME5;}
+    case '=': {return OPNAME5;}
+    case '+': {return OPNAME6;}
+    case '-': {return OPNAME6;}
+    case '*': {return OPNAME7;}
+    case '/': {return OPNAME7;}
+    case '%': {return OPNAME7;}
+    default: {return ERROR;}
+    }
 }
 
-{_OPNAME4} {
-    return OPNAME4;
-}
-
-{_OPNAME5} {
-    return OPNAME5;
-}
-{_OPNAME6} {
-    return OPNAME6;
-}
-{_OPNAME7} {
-    return OPNAME7;
-}
 {_NAME} {
 return NAME;
 }

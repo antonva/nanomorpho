@@ -1,5 +1,6 @@
 ;;; Comment
 main() {
+       var x = 3;
        while(true)
        {
           writeln("Hello, world!");
@@ -8,8 +9,12 @@ main() {
           }
        }
 }
+
+*/%+-<>!==&|:?~^
 */%+-<>!==&|:?~^
 <=
+<=
+>=
 &
 &&
 &&&
