@@ -22,6 +22,8 @@ import java.io.*;
 %class NanoLexer
 %unicode
 %byaccj
+%line
+%column
 
 %{
 
@@ -87,6 +89,10 @@ public int getNextToken() {
 
 public String getLexeme() {
     return this.l1;
+}
+
+public String getNextLexeme() {
+    return this.l2;
 }
 
 // This runs the scanner:
