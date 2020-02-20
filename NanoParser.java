@@ -164,30 +164,39 @@ public class NanoParser {
         }
         l.advance();
         body(l);
-        while(l.getLexeme().equals("elsif")){
+		elsepart(l);
+
+    }
+	
+    public void elsepart(NanoLexer l) throws IOException {
+		if(l.getLexeme().equals("else")){
             l.advance();
-            if(!l.getLexeme().equals("(")){
-                throw new Error("expected ( found: "+ l.getLexeme() + " in line: "+ l.getLine() + " column: "+ l.getColumn());
-            }
+            body(l);
+        }
+		else if(l.getLexeme().equals("elsif")){
+			if(!l.getLexeme().equals("(")){
+            throw new Error("expected ( found: "+ l.getLexeme() + " in line: "+ l.getLine() + " column: "+ l.getColumn());
+			}
             l.advance();
             expr(l);
-            if(!l.getLexeme().equals(")")){
-                throw new Error("expected ) found: "+ l.getLexeme() + " in line: "+ l.getLine() + " column: "+ l.getColumn());
-            }
+			if(!l.getLexeme().equals(")")){
+            throw new Error("expected ) found: "+ l.getLexeme() + " in line: "+ l.getLine() + " column: "+ l.getColumn());
+			}
             l.advance();
-            body(l);
-        }
-        if(l.getLexeme().equals("else")){
-            l.advance();
-            body(l);
+			body(l);
+			elsepart(l);
         }
     }
-
-    public void body(NanoLexer l) throws IOException {
+	
+	public void body(NanoLexer l) throws IOException {
         if(!l.getLexeme().equals("{")){
             throw new Error("expected { found: "+ l.getLexeme() + " in line: "+ l.getLine() + " column: "+ l.getColumn());
         }
         l.advance();
+		expr(l);
+		if(!l.getLexeme().equals(";")){
+                throw new Error("expected ; found: "+ l.getLexeme() + " in line: "+ l.getLine() + " column: "+ l.getColumn());
+        }	
         while(!l.getLexeme().equals("}")){
             if(l.getToken() == 0){
                 throw new Error("expected } found: "+ l.getLexeme() + " in line: "+ l.getLine() + " column: "+ l.getColumn());
@@ -197,6 +206,13 @@ public class NanoParser {
                 throw new Error("expected ; found: "+ l.getLexeme() + " in line: "+ l.getLine() + " column: "+ l.getColumn());
             }
             l.advance();
+        }
+        l.advance();
+    }
+	
+	public void opcode(NanoLexer l) throws IOException {
+        if(l.getToken() < 2000 || l.getToken() > 2007){
+            throw new Error("undocumented instruction '"+ l.getLexeme() + "' in line: "+ l.getLine() + " column: "+ l.getColumn());
         }
         l.advance();
     }
