@@ -36,40 +36,40 @@ public class NanoParser {
             throw new ParsingException("NAME", l.getLexeme(), l.getLine(), l.getColumn());
         }
         l.advance();
-        if(!l.getLexeme().equals("(")) {
+        if(l.getToken() != 40) { //(
             throw new ParsingException("(", l.getLexeme(), l.getLine(), l.getColumn());
         }
         l.advance();
         while(l.getToken() == NAME){
                 l.advance();
-                if(l.getLexeme().equals(",")){
+                if(l.getToken() == 44){//,
                     l.advance();
                     if(l.getToken() != NAME){
                         throw new ParsingException("NAME", l.getLexeme(), l.getLine(), l.getColumn());
                     }
                 }
         }
-        if(!l.getLexeme().equals(")")){
+        if(l.getToken() != 41){ //)
             throw new ParsingException(")", l.getLexeme(), l.getLine(), l.getColumn());
         }
         l.advance();
-        if(!l.getLexeme().equals("{")){
+        if(l.getToken() != 123){ //{
             throw new ParsingException("{", l.getLexeme(), l.getLine(), l.getColumn());
         }
         l.advance();
         while(l.getToken() == VAR){
             decl();
-            if(!l.getLexeme().equals(";")){
+            if(l.getToken() != 59){ //;
                 throw new ParsingException(";", l.getLexeme(), l.getLine(), l.getColumn());
             }
             l.advance();
         }
-        while(!l.getLexeme().equals("}")){
+        while(l.getToken() != 125){ //}
             if(l.getToken() == 0){
                 throw new ParsingException("}", l.getLexeme(), l.getLine(), l.getColumn());
             }
             expr();
-            if(!l.getLexeme().equals(";")){
+            if(l.getToken() != 59){ //;
                 throw new ParsingException(";", l.getLexeme(), l.getLine(), l.getColumn());
             }
             l.advance();
@@ -87,7 +87,7 @@ public class NanoParser {
         }
         while(l.getToken() == NAME){
             l.advance();
-            if(l.getLexeme().equals(",")){
+            if(l.getToken() == 44){ //,
                 l.advance();
                 if(l.getToken() != NAME){
                     throw new ParsingException("NAME", l.getLexeme(), l.getLine(), l.getColumn());
@@ -135,7 +135,7 @@ public class NanoParser {
     }
 
     public static void notexpr() throws IOException {
-        if (l.getLexeme().equals("!")) {
+        if (l.getToken() == 33) {//!
             l.advance();
             notexpr();
         } else {
@@ -203,7 +203,6 @@ public class NanoParser {
         } break;
         case LITERAL:
             //TODO: Add LITERAL to tree
-            System.out.println(l.getLexeme());
             l.advance();
             break;
         case WHILE: {
@@ -243,24 +242,24 @@ public class NanoParser {
             throw new ParsingException("if", l.getLexeme(), l.getLine(), l.getColumn());
         }
         l.advance();
-        if(!l.getLexeme().equals("(")){
+        if(l.getToken() != 40){//(
             throw new ParsingException("(", l.getLexeme(), l.getLine(), l.getColumn());
         }
         l.advance();
         expr();
-        if(!l.getLexeme().equals(")")){
+        if(l.getToken() != 41){//)
             throw new ParsingException(")", l.getLexeme(), l.getLine(), l.getColumn());
         }
         l.advance();
         body();
         while(l.getLexeme().equals("elsif")){
             l.advance();
-            if(!l.getLexeme().equals("(")){
+            if(l.getToken() != 40){//(
                 throw new ParsingException("(", l.getLexeme(), l.getLine(), l.getColumn());
             }
             l.advance();
             expr();
-            if(!l.getLexeme().equals(")")){
+            if(l.getToken() != 41){//)
                 throw new ParsingException(")", l.getLexeme(), l.getLine(), l.getColumn());
             }
             l.advance();
