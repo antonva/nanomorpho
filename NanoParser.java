@@ -26,22 +26,18 @@ public class NanoParser {
     public static Object[] program() throws IOException {
         Vector res = new Vector<Object>();
         while(l.getToken() != 0){
-            res.add(expr());
+            function();
         }
         return res.toArray();
     }
 
     public static void function() throws IOException {
         if(l.getToken() != NAME){
-            throw new Error("expected NAME found: "+ l.getLexeme()
-                            + " in line: "+ l.getLine()
-                            + " column: "+ l.getColumn());
+            throw new ParsingException("NAME", l.getLexeme(), l.getLine(), l.getColumn());
         }
         l.advance();
         if(!l.getLexeme().equals("(")) {
-            throw new Error("expected ( found: "+ l.getLexeme()
-                            + " in line: "+ l.getLine()
-                            + " column: "+ l.getColumn());
+            throw new ParsingException("(", l.getLexeme(), l.getLine(), l.getColumn());
         }
         l.advance();
         while(l.getToken() == NAME){
@@ -49,44 +45,32 @@ public class NanoParser {
                 if(l.getLexeme().equals(",")){
                     l.advance();
                     if(l.getToken() != NAME){
-                        throw new Error("expected NAME found: "+ l.getLexeme()
-                                        + " in line: "+ l.getLine()
-                                        + " column: "+ l.getColumn());
+                        throw new ParsingException("NAME", l.getLexeme(), l.getLine(), l.getColumn());
                     }
                 }
         }
         if(!l.getLexeme().equals(")")){
-            throw new Error("expected ) found: "+ l.getLexeme()
-                            + " in line: "+ l.getLine()
-                            + " column: "+ l.getColumn());
+            throw new ParsingException(")", l.getLexeme(), l.getLine(), l.getColumn());
         }
         l.advance();
         if(!l.getLexeme().equals("{")){
-            throw new Error("expected { found: "+ l.getLexeme()
-                            + " in line: "+ l.getLine()
-                            + " column: "+ l.getColumn());
+            throw new ParsingException("{", l.getLexeme(), l.getLine(), l.getColumn());
         }
         l.advance();
         while(l.getToken() == VAR){
             decl();
             if(!l.getLexeme().equals(";")){
-                throw new Error("expected ; found: "+ l.getLexeme()
-                                + " in line: "+ l.getLine()
-                                + " column: "+ l.getColumn());
+                throw new ParsingException(";", l.getLexeme(), l.getLine(), l.getColumn());
             }
             l.advance();
         }
         while(!l.getLexeme().equals("}")){
             if(l.getToken() == 0){
-                throw new Error("expected } found: "+ l.getLexeme()
-                                + " in line: "+ l.getLine()
-                                + " column: "+ l.getColumn());
+                throw new ParsingException("}", l.getLexeme(), l.getLine(), l.getColumn());
             }
             expr();
             if(!l.getLexeme().equals(";")){
-                throw new Error("expected ; found: "+ l.getLexeme()
-                                + " in line: "+ l.getLine()
-                                + " column: "+ l.getColumn());
+                throw new ParsingException(";", l.getLexeme(), l.getLine(), l.getColumn());
             }
             l.advance();
         }
@@ -95,51 +79,51 @@ public class NanoParser {
 
     public static void decl() throws IOException {
         if(l.getToken() != VAR){
-            throw new Error("expected var found: "+ l.getLexeme() + " in line: "+ l.getLine() + " column: "+ l.getColumn());
+            throw new ParsingException("var", l.getLexeme(), l.getLine(), l.getColumn());
         }
         l.advance();
         if(l.getToken() != NAME){
-            throw new Error("expected NAME found: "+ l.getLexeme() + " in line: "+ l.getLine() + " column: "+ l.getColumn());
+            throw new ParsingException("NAME", l.getLexeme(), l.getLine(), l.getColumn());
         }
         while(l.getToken() == NAME){
             l.advance();
             if(l.getLexeme().equals(",")){
                 l.advance();
                 if(l.getToken() != NAME){
-                    throw new Error("expected NAME found: "+ l.getLexeme() + " in line: "+ l.getLine() + " column: "+ l.getColumn());
+                    throw new ParsingException("NAME", l.getLexeme(), l.getLine(), l.getColumn());
                 }
             }
         }
     }
 
-    public static Object[] expr() throws IOException {
-        Object[] e;
+    public static void expr() throws IOException {
         switch(l.getToken()) {
         case RETURN:
             String ret = l.getLexeme();
             l.advance();
-            e = expr();
-            return new Object[]{"CALL",ret,e};
+            expr();
+            break;
         case NAME:
             if (l.getNextToken() == 61 ) {
                 String name = l.getLexeme();
                 l.advance();
                 l.advance();
-                e = expr();
-                return new Object[]{"CALL",name,e};
+                expr();
+            } else {
+                orexpr();
             }
+            break;
         default:
-            return orexpr();
+            orexpr();
         }
     }
 
-    public static Object[] orexpr() throws IOException {
+    public static void orexpr() throws IOException {
         andexpr();
         if (l.getToken() == OR ) {
             l.advance();
             orexpr();
         }
-        return new Object[]{"CALL","x","y"};
     }
 
     public static void andexpr() throws IOException {
@@ -199,108 +183,85 @@ public class NanoParser {
     public static void smallexpr() throws IOException {
         switch(l.getToken()) {
         case IF: {
-            l.advance();
             ifexpr();
         } break;
         case NAME: {
             String name = l.getLexeme();
             l.advance();
-            if(l.getToken() == 41){
+            if(l.getToken() == 40){
                 l.advance();
-                if(!l.getLexeme().equals(")")){
-                    while(true){
-                        expr();
-                        if(l.getLexeme().equals(",")){
-                            l.advance();
-                        }
-                        else if(!l.getLexeme().equals(")")){
-                            throw new Error("expected ) found: "+ l.getLexeme()
-                                            + " in line: "+ l.getLine()
-                                            + " column: "+ l.getColumn());
-                        }
-                        else{
-                            l.advance();
-                            break;
-                        }
+                while(l.getToken() != 41){ //)
+                    expr();
+                    if(l.getToken() == 44){ //,
+                        l.advance();
+                    } else if (l.getToken() == 0 ) {
+                        throw new ParsingException(")", l.getLexeme(), l.getLine(), l.getColumn());
                     }
                 }
-                else{
-                    l.advance();
-                }
+                l.advance();
             }
         } break;
-        case LITERAL: {
+        case LITERAL:
             //TODO: Add LITERAL to tree
+            System.out.println(l.getLexeme());
             l.advance();
-        } break;
+            break;
         case WHILE: {
                 l.advance();
-                if(!l.getLexeme().equals("(")){
-                    throw new Error("expected ( found: " + l.getLexeme()
-                                    + " in line: " + l.getLine()
-                                    + " column: "+ l.getColumn());
+                if(l.getToken() == 40){ //(
+                    l.advance();
+                    expr();
+                    if(l.getToken() != 41){ //)
+                        throw new ParsingException(")", l.getLexeme(), l.getLine(), l.getColumn());
+                    }
+                    l.advance();
+                    body();
+                } else {
+                    throw new ParsingException("(", l.getLexeme(), l.getLine(), l.getColumn());
                 }
-                l.advance();
-                expr();
-                if(!l.getLexeme().equals(")")){
-                    throw new Error("expected ) found: "+ l.getLexeme()
-                                    + " in line: "+ l.getLine()
-                                    + " column: "+ l.getColumn());
-                }
-                l.advance();
-                body();
         } break;
         case 40: { //(
             l.advance();
             expr();
             if (l.getToken() != 41) { //)
-                throw new Error("expected ) found: " + l.getLexeme()
-                                + " in line: " + l.getLine()
-                                + " column: " + l.getColumn());
+                throw new ParsingException(")", l.getLexeme(), l.getLine(), l.getColumn());
             }
             l.advance();
         } break;
+        case OPNAME1: case OPNAME2: case OPNAME3:
+        case OPNAME4: case OPNAME5: case OPNAME6:
+        case OPNAME7:
+            l.advance();
+            smallexpr();
         default:
-            throw new Error("expected SMALLEXPR found: " + l.getLexeme()
-                            + " in line: " + l.getLine()
-                            + " column: " + l.getColumn());
+            throw new ParsingException("SMALLEXPR", l.getLexeme(), l.getLine(), l.getColumn());
         }
     }
 
     public static void ifexpr() throws IOException {
         if(!l.getLexeme().equals("if")){
-            throw new Error("expected if found: "+ l.getLexeme()
-                            + " in line: "+ l.getLine()
-                            + " column: "+ l.getColumn());
+            throw new ParsingException("if", l.getLexeme(), l.getLine(), l.getColumn());
         }
         l.advance();
         if(!l.getLexeme().equals("(")){
-            throw new Error("expected ( found: "+ l.getLexeme()
-                            + " in line: "+ l.getLine()
-                            + " column: "+ l.getColumn());
+            throw new ParsingException("(", l.getLexeme(), l.getLine(), l.getColumn());
         }
         l.advance();
         expr();
         if(!l.getLexeme().equals(")")){
-            throw new Error("expected ) found: "+ l.getLexeme()
-                            + " in line: "+ l.getLine()
-                            + " column: "+ l.getColumn());
+            throw new ParsingException(")", l.getLexeme(), l.getLine(), l.getColumn());
         }
         l.advance();
         body();
         while(l.getLexeme().equals("elsif")){
             l.advance();
             if(!l.getLexeme().equals("(")){
-                throw new Error("expected ( found: "+ l.getLexeme()
-                                + " in line: "+ l.getLine()
-                                + " column: "+ l.getColumn());
+                throw new ParsingException("(", l.getLexeme(), l.getLine(), l.getColumn());
             }
             l.advance();
             expr();
             if(!l.getLexeme().equals(")")){
-                throw new Error("expected ) found: "+ l.getLexeme()
-                                + " in line: "+ l.getLine()
-                                + " column: "+ l.getColumn());
+                throw new ParsingException(")", l.getLexeme(), l.getLine(), l.getColumn());
             }
             l.advance();
             body();
@@ -313,20 +274,16 @@ public class NanoParser {
 
     public static void body() throws IOException {
         if(!l.getLexeme().equals("{")){
-            throw new Error("expected { found: "+ l.getLexeme()
-                            + " in line: "+ l.getLine()
-                            + " column: "+ l.getColumn());
+            throw new ParsingException("{", l.getLexeme(), l.getLine(), l.getColumn());
         }
         l.advance();
         while(!l.getLexeme().equals("}")){
             if(l.getToken() == 0){
-                throw new Error("expected } found: "+ l.getLexeme()
-                                + " in line: "+ l.getLine()
-                                + " column: "+ l.getColumn());
+                throw new ParsingException("}", l.getLexeme(), l.getLine(), l.getColumn());
             }
             expr();
             if(!l.getLexeme().equals(";")){
-                throw new Error("expected ; found: "+ l.getLexeme() + " in line: "+ l.getLine() + " column: "+ l.getColumn());
+                throw new ParsingException(";", l.getLexeme(), l.getLine(), l.getColumn());
             }
             l.advance();
         }
@@ -349,9 +306,8 @@ public class NanoParser {
 
     public static void main(String[] args) throws IOException {
         l = new NanoLexer(new FileReader(args[0]));
-        NanoParser parser = new NanoParser();
         l.init();
-        Object[] res = parser.program();
+        Object[] res = program();
         System.out.println("Accepted");
     }
 }

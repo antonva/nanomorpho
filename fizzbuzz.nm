@@ -1,0 +1,22 @@
+fizzbuzz(n) {
+  var x;
+  x = 0;
+  while (x < 101) {
+    if (x % 15 == 0) {
+      println("fizzbuzz");
+    } elsif ( x % 3 == 0) {
+      println("fizz");
+    } elsif (x % 5 == 0) {
+      println("buzz");
+    };
+    x = x+1 ;
+  };
+}
+
+fibo(n {
+  if (n < 2) {
+    return n;
+  } else {
+    return fibo(n-1) + fibo(n-2);
+  };
+}
