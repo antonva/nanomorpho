@@ -252,36 +252,42 @@ public class NanoParser {
         }
         l.advance();
         body();
-        while(l.getLexeme().equals("elsif")){
-            l.advance();
-            if(l.getToken() != 40){//(
-                throw new ParsingException("(", l.getLexeme(), l.getLine(), l.getColumn());
-            }
-            l.advance();
-            expr();
-            if(l.getToken() != 41){//)
-                throw new ParsingException(")", l.getLexeme(), l.getLine(), l.getColumn());
-            }
-            l.advance();
-            body();
-        }
+		elsepart();
+
+    }
+
+    public static void elsepart() throws IOException {
         if(l.getLexeme().equals("else")){
             l.advance();
             body();
         }
+        else if(l.getLexeme().equals("elsif")){
+            l.advance();
+            if(l.getToken() != 40) { //(
+                throw new ParsingException("(", l.getLexeme(), l.getLine(), l.getColumn());
+            }
+            l.advance();
+            expr();
+            if(l.getToken() != 41) { //)
+                throw new ParsingException(")", l.getLexeme(), l.getLine(), l.getColumn());
+            }
+            l.advance();
+            body();
+            elsepart();
+        }
     }
 
     public static void body() throws IOException {
-        if(!l.getLexeme().equals("{")){
+        if(l.getToken() != 123) { //{
             throw new ParsingException("{", l.getLexeme(), l.getLine(), l.getColumn());
         }
         l.advance();
-        while(!l.getLexeme().equals("}")){
+        while(l.getToken() != 125){ //}
             if(l.getToken() == 0){
                 throw new ParsingException("}", l.getLexeme(), l.getLine(), l.getColumn());
             }
             expr();
-            if(!l.getLexeme().equals(";")){
+            if(l.getToken() != 59 ){ //;
                 throw new ParsingException(";", l.getLexeme(), l.getLine(), l.getColumn());
             }
             l.advance();
@@ -301,6 +307,13 @@ public class NanoParser {
             case OPNAME7:	return k==7;
             default:		return false;
             }
+    }
+
+	public void opcode() throws IOException {
+        if(l.getToken() < 2000 || l.getToken() > 2007){
+            throw new Error("undocumented instruction '"+ l.getLexeme() + "' in line: "+ l.getLine() + " column: "+ l.getColumn());
+        }
+        l.advance();
     }
 
     public static void main(String[] args) throws IOException {
