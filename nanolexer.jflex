@@ -56,7 +56,7 @@ private static int col1,col2;
 
 
 public int getLine() { return yyline+1; }
-public int getColumn() { return yycolumn+1; }
+public int getColumn() { return yycolumn; }
 public int advance() throws IOException {
     if (this.t2 == 0) {
         this.t1 = 0;

@@ -47,6 +47,8 @@ public class NanoParser {
                     if(l.getToken() != NAME){
                         throw new ParsingException("NAME", l.getLexeme(), l.getLine(), l.getColumn());
                     }
+                } else {
+                    break;
                 }
         }
         if(l.getToken() != 41){ //)
@@ -232,6 +234,7 @@ public class NanoParser {
         case OPNAME7:
             l.advance();
             smallexpr();
+            break;
         default:
             throw new ParsingException("SMALLEXPR", l.getLexeme(), l.getLine(), l.getColumn());
         }
