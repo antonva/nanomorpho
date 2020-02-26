@@ -140,9 +140,6 @@ _OPNAME=([?\~\^\:\+\-\|&<>!*/%=])+
     return OR;
 }
 
-{_STRING} | {_FLOAT} | {_CHAR} | {_INT} | null | true | false {
-    return LITERAL;
-}
 
 "if" | "elsif" | "else" {
     return IF;
@@ -158,6 +155,10 @@ _OPNAME=([?\~\^\:\+\-\|&<>!*/%=])+
 
 "while" {
     return WHILE;
+}
+
+{_STRING} | {_FLOAT} | {_CHAR} | {_INT} | null | true | false {
+    return LITERAL;
 }
 
 {_OPNAME} {
