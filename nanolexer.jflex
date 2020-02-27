@@ -31,22 +31,22 @@ import java.io.*;
 // the class, NanoLexer.java, that is generated.
 
 // Definitions of tokens:
-final static int ERROR   = -1;
-final static int IF      = 1001;
-final static int NAME    = 1002;
-final static int LITERAL = 1003;
-final static int AND     = 1004;
-final static int OR      = 1005;
-final static int VAR     = 1006;
-final static int WHILE   = 1007;
-final static int RETURN  = 1008;
-final static int OPNAME1 = 2001;
-final static int OPNAME2 = 2002;
-final static int OPNAME3 = 2003;
-final static int OPNAME4 = 2004;
-final static int OPNAME5 = 2005;
-final static int OPNAME6 = 2006;
-final static int OPNAME7 = 2007;
+public final static int ERROR   = -1;
+public final static int IF      = 1001;
+public final static int NAME    = 1002;
+public final static int LITERAL = 1003;
+public final static int AND     = 1004;
+public final static int OR      = 1005;
+public final static int VAR     = 1006;
+public final static int WHILE   = 1007;
+public final static int RETURN  = 1008;
+public final static int OPNAME1 = 2001;
+public final static int OPNAME2 = 2002;
+public final static int OPNAME3 = 2003;
+public final static int OPNAME4 = 2004;
+public final static int OPNAME5 = 2005;
+public final static int OPNAME6 = 2006;
+public final static int OPNAME7 = 2007;
 
 // Variables that contain will contain lexemes and tokens as they are recognized.
 private static String l1, l2;

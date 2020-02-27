@@ -4,25 +4,6 @@ import java.util.*;
 public class NanoParser {
     private static NanoLexer l;
 
-    // Definitions of tokens:
-    final static int ERROR   = -1;
-    final static int IF      = 1001;
-    final static int NAME    = 1002;
-    final static int LITERAL = 1003;
-    final static int AND     = 1004;
-    final static int OR      = 1005;
-    final static int VAR     = 1006;
-    final static int WHILE   = 1007;
-    final static int RETURN  = 1008;
-    final static int OPNAME1 = 2001;
-    final static int OPNAME2 = 2002;
-    final static int OPNAME3 = 2003;
-    final static int OPNAME4 = 2004;
-    final static int OPNAME5 = 2005;
-    final static int OPNAME6 = 2006;
-    final static int OPNAME7 = 2007;
-
-
     public static Object[] program() throws IOException {
         Vector res = new Vector<Object>();
         while(l.getToken() != 0){
@@ -33,7 +14,7 @@ public class NanoParser {
 
     public static Object[] function() throws IOException {
         Vector res = new Vector<Object>();
-        if(l.getToken() != NAME){
+        if(l.getToken() != l.NAME){
             throw new ParsingException("NAME", l.getLexeme(), l.getLine(), l.getColumn());
         }
         res.add(l.getLexeme());
@@ -43,12 +24,12 @@ public class NanoParser {
         }
         l.advance();
         Vector args = new Vector<Object>();
-        while(l.getToken() == NAME){
+        while(l.getToken() == l.NAME){
             args.add(l.getLexeme());
             l.advance();
             if( l.getToken() == ',') {
                 l.advance();
-                if(l.getToken() != NAME){
+                if(l.getToken() != l.NAME){
                     throw new ParsingException("NAME", l.getLexeme(), l.getLine(), l.getColumn());
                 }
             } else {
@@ -64,7 +45,7 @@ public class NanoParser {
             throw new ParsingException("{", l.getLexeme(), l.getLine(), l.getColumn());
         }
         l.advance();
-        while(l.getToken() == VAR){
+        while(l.getToken() == l.VAR){
             res.add(decl());
             if( l.getToken() != ';') {
                 throw new ParsingException(";", l.getLexeme(), l.getLine(), l.getColumn());
@@ -87,19 +68,19 @@ public class NanoParser {
 
     public static Object[] decl() throws IOException {
         Vector res = new Vector<Object>();
-        if(l.getToken() != VAR){
+        if(l.getToken() != l.VAR){
             throw new ParsingException("var", l.getLexeme(), l.getLine(), l.getColumn());
         }
         res.add("STORE");
         l.advance();
-        if(l.getToken() != NAME){
+        if(l.getToken() != l.NAME){
             throw new ParsingException("NAME", l.getLexeme(), l.getLine(), l.getColumn());
         }
-        while(l.getToken() == NAME){
+        while(l.getToken() == l.NAME){
             l.advance();
             if( l.getToken() == ',') {
                 l.advance();
-                if(l.getToken() != NAME){
+                if(l.getToken() != l.NAME){
                     throw new ParsingException("NAME", l.getLexeme(), l.getLine(), l.getColumn());
                 }
             }
@@ -109,13 +90,12 @@ public class NanoParser {
 
     public static Object[] expr() throws IOException {
         Vector res = new Vector<Object>();
-        switch(l.getToken()) {
-        case RETURN:
+        if ( l.getToken() == l.RETURN) {
             res.add("RETURN");
             l.advance();
             res.add(expr());
             return res.toArray();
-        case NAME:
+        } else if ( l.getToken() == l.NAME) {
             if ( l.getNextToken() == '=' ) {
                 res.add("NAME");
                 l.advance();
@@ -125,15 +105,14 @@ public class NanoParser {
                 res.add(orexpr());
             }
             return res.toArray();
-        default:
-            return orexpr();
         }
+        return orexpr();
     }
 
     public static Object[] orexpr() throws IOException {
         Vector res = new Vector<Object>();
         Object[] expr1 = andexpr();
-        if (l.getToken() == OR ) {
+        if (l.getToken() == l.OR ) {
             res.add("OR");
             res.add(expr1);
             l.advance();
@@ -146,7 +125,7 @@ public class NanoParser {
     public static Object[] andexpr() throws IOException {
         Vector res = new Vector<Object>();
         Object[] expr1 = notexpr();
-        if (l.getToken() == AND ) {
+        if (l.getToken() == l.AND ) {
             res.add("AND");
             res.add(expr1);
             l.advance();
@@ -198,10 +177,9 @@ public class NanoParser {
 
     public static Object[] smallexpr() throws IOException {
         Vector res = new Vector<Object>();
-        switch(l.getToken()) {
-        case IF:
+        if (l.getToken() == l.IF) {
             return ifexpr();
-        case NAME:
+        } else if (l.getToken() == l.NAME) {
             res.add("NAME");
             l.advance();
             if( l.getToken() == '(') {
@@ -217,11 +195,11 @@ public class NanoParser {
                 l.advance();
             }
             return res.toArray();
-        case LITERAL:
+        } else if (l.getToken() == l.LITERAL) {
             res.add(new Object[]{"LITERAL", l.getLexeme()});
             l.advance();
             return res.toArray();
-        case WHILE:
+        } else if (l.getToken() == l.WHILE) {
             res.add("WHILE");
             l.advance();
             if( l.getToken() == '(') {
@@ -236,7 +214,7 @@ public class NanoParser {
                 throw new ParsingException("(", l.getLexeme(), l.getLine(), l.getColumn());
             }
             return res.toArray();
-        case 40: //(
+        } else if (l.getToken() == '(') {
             l.advance();
             res.add(expr());
             if ( l.getToken() != ')') {
@@ -244,15 +222,15 @@ public class NanoParser {
             }
             l.advance();
             return res.toArray();
-        case OPNAME1: case OPNAME2: case OPNAME3:
-        case OPNAME4: case OPNAME5: case OPNAME6:
-        case OPNAME7:
+        } else if (l.getToken() == l.OPNAME1 || l.getToken() == l.OPNAME2 ||
+                   l.getToken() == l.OPNAME3 || l.getToken() == l.OPNAME4 ||
+                   l.getToken() == l.OPNAME5 || l.getToken() == l.OPNAME6 ||
+                   l.getToken() == l.OPNAME7) {
             l.advance();
             res.add(smallexpr());
             return res.toArray();
-        default:
-            throw new ParsingException("SMALLEXPR", l.getLexeme(), l.getLine(), l.getColumn());
         }
+        throw new ParsingException("SMALLEXPR", l.getLexeme(), l.getLine(), l.getColumn());
     }
 
     public static Object[] ifexpr() throws IOException {
@@ -288,13 +266,13 @@ public class NanoParser {
                 throw new ParsingException("(", l.getLexeme(), l.getLine(), l.getColumn());
             }
             l.advance();
-            expr();
+            res.add(expr());
             if( l.getToken() != ')') {
                 throw new ParsingException(")", l.getLexeme(), l.getLine(), l.getColumn());
             }
             l.advance();
-            body();
-            elsepart();
+            res.add(body());
+            res.add(elsepart());
         }
         return res.toArray();
     }
@@ -310,7 +288,7 @@ public class NanoParser {
             if(l.getToken() == 0){
                 throw new ParsingException("}", l.getLexeme(), l.getLine(), l.getColumn());
             }
-            expr();
+            res.add(expr());
             if( l.getToken() != ';') {
                 throw new ParsingException(";", l.getLexeme(), l.getLine(), l.getColumn());
             }
@@ -321,17 +299,14 @@ public class NanoParser {
     }
 
     public static boolean isOp( int tok, int k ) {
-        switch( tok )
-            {
-            case OPNAME1:	return k==1;
-            case OPNAME2:	return k==2;
-            case OPNAME3:	return k==3;
-            case OPNAME4:	return k==4;
-            case OPNAME5:	return k==5;
-            case OPNAME6:	return k==6;
-            case OPNAME7:	return k==7;
-            default:		return false;
-            }
+        if (tok == l.OPNAME1) { return k==1; }
+        if (tok == l.OPNAME2) { return k==2; }
+        if (tok == l.OPNAME3) { return k==3; }
+        if (tok == l.OPNAME4) { return k==4; }
+        if (tok == l.OPNAME5) { return k==5; }
+        if (tok == l.OPNAME6) { return k==6; }
+        if (tok == l.OPNAME7) { return k==7; }
+        return false;
     }
 
     public static void opcode() throws IOException {
@@ -350,14 +325,9 @@ public class NanoParser {
     }
 
     private static int printRes(Object[] res, int indent) {
-        String tab = "";
-        for (int i = 0; i < indent; i++) {
-            tab = tab + "";
-        }
-        System.out.print(tab);
         for (int i = 0; i < res.length; i++) {
-            System.out.print("[ ");
             if (res[i] instanceof Object[]) {
+                System.out.print("[ ");
                 indent++;
                 indent = printRes((Object[]) res[i], indent);
             } else {
@@ -368,11 +338,12 @@ public class NanoParser {
             indent--;
         }
 
-        if (indent < 3) {
-            System.out.println("]");
-        } else {
-            System.out.print("]");
+        String tab = "";
+        for (int i = 0; i < indent; i++) {
+            tab = tab + " ";
         }
+        System.out.print("]\n");
+        System.out.print(tab);
 
         return indent;
     }
