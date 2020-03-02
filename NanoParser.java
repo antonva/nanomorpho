@@ -236,9 +236,6 @@ public class NanoParser {
     public static Object[] ifexpr() throws IOException {
         Vector res = new Vector<Object>();
         res.add("IF");
-        if(!l.getLexeme().equals("if")){
-            throw new ParsingException("if", l.getLexeme(), l.getLine(), l.getColumn());
-        }
         l.advance();
         if(l.getToken() != '(') {
             throw new ParsingException("(", l.getLexeme(), l.getLine(), l.getColumn());
@@ -256,11 +253,11 @@ public class NanoParser {
 
     public static Object[] elsepart() throws IOException {
         Vector res = new Vector<Object>();
-        if(l.getLexeme().equals("else")){
+        if(l.getToken() == l.ELSE){
             l.advance();
             res.add(body());
         }
-        else if(l.getLexeme().equals("elsif")){
+        else if(l.getToken() == l.ELSIF){
             l.advance();
             if( l.getToken() != '(') {
                 throw new ParsingException("(", l.getLexeme(), l.getLine(), l.getColumn());
