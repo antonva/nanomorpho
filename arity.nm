@@ -1,0 +1,7 @@
+arity(a,b,c,d) {
+    var x,y,z,w;
+    x = a;
+    y = b;
+    z = c;
+    w = d;
+}

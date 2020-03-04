@@ -3,6 +3,8 @@ import java.util.*;
 
 public class NanoParser {
     private static NanoLexer l;
+    private static int varCount;
+    private static HashMap<String, Integer> varTable;
 
     public static Object[] program() throws IOException {
         Vector res = new Vector<Object>();
@@ -14,6 +16,8 @@ public class NanoParser {
 
     public static Object[] function() throws IOException {
         Vector res = new Vector<Object>();
+        varCount = 0;
+        varTable = new HashMap<String, Integer>();
         if(l.getToken() != l.NAME){
             throw new ParsingException("NAME", l.getLexeme(), l.getLine(), l.getColumn());
         }
@@ -23,9 +27,8 @@ public class NanoParser {
             throw new ParsingException("(", l.getLexeme(), l.getLine(), l.getColumn());
         }
         l.advance();
-        Vector args = new Vector<Object>();
         while(l.getToken() == l.NAME){
-            args.add(l.getLexeme());
+            addVar(l.getLexeme());
             l.advance();
             if( l.getToken() == ',') {
                 l.advance();
@@ -36,7 +39,10 @@ public class NanoParser {
                 break;
             }
         }
-        res.add(args.toArray());
+        // Add the function arity to the function signature.
+        int arity = varCount;
+        res.add(arity);
+
         if( l.getToken() != ')') {
             throw new ParsingException(")", l.getLexeme(), l.getLine(), l.getColumn());
         }
@@ -46,37 +52,44 @@ public class NanoParser {
         }
         l.advance();
         while(l.getToken() == l.VAR){
-            res.add(decl());
+            varCount = varCount + decl();
             if( l.getToken() != ';') {
                 throw new ParsingException(";", l.getLexeme(), l.getLine(), l.getColumn());
             }
             l.advance();
         }
+        // Add the number of variables
+        res.add(varCount);
+        Vector exprs = new Vector<Object[]>();
         while( l.getToken() != '}'){
             if(l.getToken() == 0){
                 throw new ParsingException("}", l.getLexeme(), l.getLine(), l.getColumn());
             }
-            res.add(expr());
+            exprs.add(expr());
             if( l.getToken() != ';') {
                 throw new ParsingException(";", l.getLexeme(), l.getLine(), l.getColumn());
             }
             l.advance();
         }
+        res.add(exprs.toArray());
         l.advance();
+        //TODO: DEBUG REMOVE ME
+        System.out.println(varTable);
         return res.toArray();
     }
 
-    public static Object[] decl() throws IOException {
-        Vector res = new Vector<Object>();
+    public static int decl() throws IOException {
+        int vc = 0;
         if(l.getToken() != l.VAR){
             throw new ParsingException("var", l.getLexeme(), l.getLine(), l.getColumn());
         }
-        res.add("STORE");
         l.advance();
         if(l.getToken() != l.NAME){
             throw new ParsingException("NAME", l.getLexeme(), l.getLine(), l.getColumn());
         }
+
         while(l.getToken() == l.NAME){
+            addVar(l.getLexeme());
             l.advance();
             if( l.getToken() == ',') {
                 l.advance();
@@ -85,7 +98,7 @@ public class NanoParser {
                 }
             }
         }
-        return res.toArray();
+        return vc;
     }
 
     public static Object[] expr() throws IOException {
@@ -97,12 +110,13 @@ public class NanoParser {
             return res.toArray();
         } else if ( l.getToken() == l.NAME) {
             if ( l.getNextToken() == '=' ) {
-                res.add("NAME");
+                res.add("STORE");
+                res.add(findVar(l.getLexeme()));
                 l.advance();
                 l.advance();
                 res.add(expr());
             } else {
-                res.add(orexpr());
+                return orexpr();
             }
             return res.toArray();
         }
@@ -180,9 +194,10 @@ public class NanoParser {
         if (l.getToken() == l.IF) {
             return ifexpr();
         } else if (l.getToken() == l.NAME) {
-            res.add("NAME");
-            l.advance();
-            if( l.getToken() == '(') {
+            if( l.getNextToken() == '(') {
+                res.add("CALL");
+                res.add(l.getLexeme());
+                l.advance();
                 l.advance();
                 while( l.getToken() != ')') {
                     res.add(expr());
@@ -193,12 +208,16 @@ public class NanoParser {
                     }
                 }
                 l.advance();
+            } else {
+                res.add("FETCH");
+                res.add(findVar(l.getLexeme()));
+                l.advance();
             }
             return res.toArray();
         } else if (l.getToken() == l.LITERAL) {
-            res.add(new Object[]{"LITERAL", l.getLexeme()});
+            Object[] literal = new Object[]{"LITERAL", l.getLexeme()};
             l.advance();
-            return res.toArray();
+            return literal;
         } else if (l.getToken() == l.WHILE) {
             res.add("WHILE");
             l.advance();
@@ -284,17 +303,19 @@ public class NanoParser {
             throw new ParsingException("{", l.getLexeme(), l.getLine(), l.getColumn());
         }
         l.advance();
+        Vector exprs = new Vector<Object>();
         while( l.getToken() != '}'){
             if(l.getToken() == 0){
                 throw new ParsingException("}", l.getLexeme(), l.getLine(), l.getColumn());
             }
-            res.add(expr());
+            exprs.add(expr());
             if( l.getToken() != ';') {
                 throw new ParsingException(";", l.getLexeme(), l.getLine(), l.getColumn());
             }
             l.advance();
         }
         l.advance();
+        res.add(exprs.toArray());
         return res.toArray();
     }
 
@@ -320,31 +341,118 @@ public class NanoParser {
         l = new NanoLexer(new FileReader(args[0]));
         l.init();
         Object[] res = program();
-        printRes(res,0);
+        printRes(res);
+        generateProgram(args[0], res);
         System.out.println("Accepted");
     }
 
-    private static int printRes(Object[] res, int indent) {
+    private static void printRes(Object[] res) {
         for (int i = 0; i < res.length; i++) {
             if (res[i] instanceof Object[]) {
-                System.out.print("[ ");
-                indent++;
-                indent = printRes((Object[]) res[i], indent);
+                System.out.print("[");
+                printRes((Object[]) res[i]);
+                System.out.println("]");
             } else {
-                System.out.print(res[i] + " ");
+                System.out.print(res[i] + ", ");
             }
         }
-        if (indent > 0) {
-            indent--;
+    }
+
+    static void generateProgram( String filename, Object[] funs ) {
+        String programname = filename.substring(0,filename.indexOf('.'));
+        System.out.println("\"" + programname +  ".mexe\" = main in");
+        System.out.println("!");
+        System.out.println("{{");
+
+        for (Object f: funs) {
+            generateFunction( (Object[])f );
         }
 
-        String tab = "";
-        for (int i = 0; i < indent; i++) {
-            tab = tab + " ";
-        }
-        System.out.print("]\n");
-        System.out.print(tab);
+        System.out.println("}}");
+        System.out.println("*");
+        System.out.println("BASIS;");
+    };
 
-        return indent;
+    static void generateFunction( Object[] fun ) {
+        //TODO: Label generation for if/while/and/or for short circuit evaluation go gotrue gofalse etc.
+        // End results
+        // #"g[f1]" =
+        int arity = (int) fun[1];
+        int varc = (int) fun[2];
+        System.out.println("#\"" + fun[0] + "[f" + arity + "]\" =");
+        System.out.println("[");
+        System.out.println("(MakeVal null)");
+        for (int i = 0; i < (arity + varc); i++) {
+            System.out.println("(Push)");
+        }
+
+        Object[] exprs = (Object[]) fun[3];
+        for (int i = 0; i < exprs.length; i++) {
+            generateExpr((Object[]) exprs[i]);
+        }
+        // [
+        // .
+        // .
+        // .
+        // ];
+        System.out.println("]");
+    }
+
+    static void generateExpr( Object[] e ) {
+        switch ( (String) e[0]) {
+        case "CALL": {
+            System.out.println("(" + e[0] + ")");
+            return;
+        }
+        case "STORE": {
+            generateExpr((Object[]) e[2]);
+            System.out.println("(" + e[0] + " " + e[1] + ")");
+            return;
+        }
+        case "WHILE": {
+            System.out.println("(While)");
+            return;
+        }
+        case "FETCH": {
+            System.out.println("(Fetch " + e[1] + ")");
+            return;
+        }
+        case "LITERAL": {
+            System.out.println("(MakeVal " + e[1] + ")");
+            return;
+        }
+        case "IF": {
+            System.out.println("(MakeVal " + e[1] + ")");
+            return;
+        }
+        case "RETURN": {
+            generateExpr((Object[]) e[1]);
+            System.out.println("(" + e[0] + ")");
+            return;
+        }
+        default: {
+            throw new Error((String)e[0]);
+        } 
+        }
+    }
+
+    // Adds a new variable to the symbol table.
+    // Throws Error if the variable already exists.
+    private static void addVar( String name )
+    {
+        if( varTable.get(name) != null )
+            throw new Error("Variable "+name+" already exists, near line " + l.getLine());
+        varTable.put(name,varCount++);
+    }
+
+    // Finds the location of an existing variable.
+    // Throws Error if the variable does not exist.
+    private static int findVar( String name )
+    {
+        Integer res = varTable.get(name);
+        if( res == null )
+            throw new Error("Variable "+name+" does not exist, near line " + l.getLine());
+        return res;
     }
 }
+//TODO: Optimizations on condition: generateJump() call 

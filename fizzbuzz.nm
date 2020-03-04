@@ -32,3 +32,7 @@ bar() {
   z = y * 3;
   baz();
 }
+
+baz(a) {
+  var b;
+}

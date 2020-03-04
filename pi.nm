@@ -1,0 +1,12 @@
+pi() {
+    return 3.14;
+}
+
+add(x,y) {
+    return x+y;
+}
+
+main() {
+    print(pi());
+    print(add(1,2));
+}
