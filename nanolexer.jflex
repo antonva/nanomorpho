@@ -40,6 +40,8 @@ public final static int OR      = 1005;
 public final static int VAR     = 1006;
 public final static int WHILE   = 1007;
 public final static int RETURN  = 1008;
+public final static int ELSE  	= 1009;
+public final static int ELSIF  	= 1010;
 public final static int OPNAME1 = 2001;
 public final static int OPNAME2 = 2002;
 public final static int OPNAME3 = 2003;
@@ -141,8 +143,16 @@ _OPNAME=([?\~\^\:\+\-\|&<>!*/%=])+
 }
 
 
-"if" | "elsif" | "else" {
+"if" {
     return IF;
+}
+
+"else" {
+    return ELSE;
+}
+
+"elsif" {
+    return ELSIF;
 }
 
 "return" {
