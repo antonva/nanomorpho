@@ -395,19 +395,29 @@ public class NanoParser {
         System.out.println("]");
     }
 
-    static void generateExpr( Object[] e ) {
+	static void generateExpr( Object[] e ) {
         switch ( (String) e[0]) {
         case "CALL": {
-            System.out.println("(" + e[0] + ")");
+        	Object[][] callArgs = (Object[][]) e[2];
+        	for (Object[]  s : callArgs)
+        	{
+        		generateExpr(s);
+        		System.out.println("(Push)");
+        	}
+            System.out.println("(Call #\""+e[1]+"[f"+callArgs.length+"\" "+callArgs.length);
             return;
         }
         case "STORE": {
             generateExpr((Object[]) e[2]);
-            System.out.println("(" + e[0] + " " + e[1] + ")");
+            System.out.println("(Store " + e[1] + ")");
             return;
         }
         case "WHILE": {
-            System.out.println("(While)");
+            System.out.println("_L1:");
+            generateExpr((Object[]) e[1]);
+            System.out.println("(GoFalse _L2) ");
+            generateExpr((Object[]) e[2]);
+            System.out.println("(Go _L1)\n_L2:"); 
             return;
         }
         case "FETCH": {
@@ -419,12 +429,40 @@ public class NanoParser {
             return;
         }
         case "IF": {
-            System.out.println("(MakeVal " + e[1] + ")");
+            generateExpr((Object[]) e[1]);
+            System.out.println("(GoFalse _L1) ");
+            generateExpr((Object[]) e[2]);
+            System.out.println("(Go _L2)\n_L1:"); 
+            generateExpr((Object[]) e[3]);
+            System.out.println("_L2:"); 
             return;
         }
         case "RETURN": {
             generateExpr((Object[]) e[1]);
-            System.out.println("(" + e[0] + ")");
+            System.out.println("(Return)");
+            return;
+        }
+        case "OR": {
+            generateExpr((Object[]) e[1]);
+            System.out.println("(GoTrue _L1) ");
+            generateExpr((Object[]) e[2]);
+            System.out.println("_L1:"); 
+            return;
+        }
+        case "AND": {
+            generateExpr((Object[]) e[1]);
+            System.out.println("(GoFalse _L1) ");
+            generateExpr((Object[]) e[2]);
+            System.out.println("_L1:"); 
+            return;
+        }
+        case "NOT": {
+        	generateExpr((Object[]) e[1]);
+        	System.out.println("(Not)");
+            return;
+        }
+        case "BODY": {
+        	generateExpr((Object[]) e[1]);
             return;
         }
         default: {
