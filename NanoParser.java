@@ -199,14 +199,16 @@ public class NanoParser {
                 res.add(l.getLexeme());
                 l.advance();
                 l.advance();
+                Vector exprs = new Vector<Object>();
                 while( l.getToken() != ')') {
-                    res.add(expr());
+                    exprs.add(expr());
                     if( l.getToken() == ',') {
                         l.advance();
                     } else if (l.getToken() == 0 ) {
                         throw new ParsingException(")", l.getLexeme(), l.getLine(), l.getColumn());
                     }
                 }
+                res.add(exprs.toArray());
                 l.advance();
             } else {
                 res.add("FETCH");
@@ -277,6 +279,7 @@ public class NanoParser {
             res.add(body());
         }
         else if(l.getToken() == l.ELSIF){
+            res.add("IF");
             l.advance();
             if( l.getToken() != '(') {
                 throw new ParsingException("(", l.getLexeme(), l.getLine(), l.getColumn());
@@ -411,11 +414,13 @@ public class NanoParser {
                 return;
             }
             case "WHILE": {
-                System.out.println("_L1:");
+                String l1 = newLabel();
+                String l2 = newLabel();
+                System.out.println(l1 + ":");
                 generateExpr((Object[]) e[1]);
-                System.out.println("(GoFalse _L2) ");
+                System.out.println("(GoFalse " + l2 + ")");
                 generateExpr((Object[]) e[2]);
-                System.out.println("(Go _L1)\n_L2:"); 
+                System.out.println("(Go " + l1 + ")\n" + l2 + ":"); 
                 return;
             }
             case "FETCH": {
@@ -427,12 +432,14 @@ public class NanoParser {
                 return;
             }
             case "IF": {
+                String l1 = newLabel();
+                String l2 = newLabel();
                 generateExpr((Object[]) e[1]);
-                System.out.println("(GoFalse _L1)");
+                System.out.println("(GoFalse " + l1 + ")");
                 generateExpr((Object[]) e[2]);
-                System.out.println("(Go _L2)\n_L1:"); 
-                generateExpr((Object[]) e[3]);
-                System.out.println("_L2:"); 
+                System.out.println("(Go " + l2 + ")\n" + l1 + ":"); 
+                generateExpr((Object[]) e[3]); 
+                System.out.println(l2 + ":");
                 return;
             }
             case "RETURN": {
@@ -441,15 +448,17 @@ public class NanoParser {
                 return;
             }
             case "OR": {
+                String l1 = newLabel();
                 generateExpr((Object[]) e[1]);
-                System.out.println("(GoTrue _L1) ");
+                System.out.println("(GoTrue "  + l1 + ")");
                 generateExpr((Object[]) e[2]);
-                System.out.println("_L1:"); 
+                System.out.println(l1 + ":"); 
                 return;
             }
             case "AND": {
+                String l1 = newLabel();
                 generateExpr((Object[]) e[1]);
-                System.out.println("(GoFalse _L1) ");
+                System.out.println("(GoFalse " + l1 + ")" );
                 generateExpr((Object[]) e[2]);
                 System.out.println("_L1:"); 
                 return;
@@ -486,6 +495,12 @@ public class NanoParser {
         if( res == null )
             throw new Error("Variable "+name+" does not exist, near line " + l.getLine());
         return res;
+    }
+
+    private static int nextLabel = 0;
+    static String newLabel()
+    {
+        return "_"+(nextLabel++);
     }
 }
 //TODO: Optimizations on condition: generateJump() call 
