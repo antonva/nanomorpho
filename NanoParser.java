@@ -405,7 +405,7 @@ public class NanoParser {
                     generateExpr((Object[]) s);
                     System.out.println("(Push)");
                 }
-                System.out.println("(Call #\""+e[1]+"[f"+callArgs.length+"\" "+callArgs.length + ")");
+                System.out.println("(Call #\""+e[1]+"[f"+callArgs.length+"]\" "+callArgs.length + ")");
                 return;
             }
             case "STORE": {
