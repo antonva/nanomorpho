@@ -73,8 +73,6 @@ public class NanoParser {
         }
         res.add(exprs.toArray());
         l.advance();
-        //TODO: DEBUG REMOVE ME
-        System.out.println(varTable);
         return res.toArray();
     }
 
@@ -339,9 +337,7 @@ public class NanoParser {
         l = new NanoLexer(new FileReader(args[0]));
         l.init();
         Object[] res = program();
-        printRes(res);
         generateProgram(args[0], res);
-        System.out.println("Accepted");
     }
 
     private static void printRes(Object[] res) {
@@ -393,7 +389,7 @@ public class NanoParser {
         // .
         // .
         // ];
-        System.out.println("]");
+        System.out.println("];");
     }
 
 	static void generateExpr( Object[] e ) {
@@ -438,7 +434,10 @@ public class NanoParser {
                 System.out.println("(GoFalse " + l1 + ")");
                 generateExpr((Object[]) e[2]);
                 System.out.println("(Go " + l2 + ")\n" + l1 + ":"); 
-                generateExpr((Object[]) e[3]); 
+                Object[] elseArr = (Object[]) e[3];
+                if (elseArr.length > 1) {
+                    generateExpr((Object[]) e[3]); 
+                }
                 System.out.println(l2 + ":");
                 return;
             }

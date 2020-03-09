@@ -1,0 +1,4 @@
+main() {
+  writeln("foo");
+  return 0;
+}

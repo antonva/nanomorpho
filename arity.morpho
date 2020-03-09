@@ -1,0 +1,18 @@
+"arity.mexe" = main in
+!
+{{
+arity(a,b,c,d) {
+    var x,y,z,w;
+    x = a;
+    y = b;
+    z = c;
+    w = d;
+    return w;
+}
+
+main() {
+   writeln(arity(0,1,2,3));
+}
+}}
+*
+BASIS;
