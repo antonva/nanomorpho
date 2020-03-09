@@ -384,11 +384,7 @@ public class NanoParser {
         for (int i = 0; i < exprs.length; i++) {
             generateExpr((Object[]) exprs[i]);
         }
-        // [
-        // .
-        // .
-        // .
-        // ];
+        System.out.println("(Return)");
         System.out.println("];");
     }
 
